@@ -1,0 +1,66 @@
+from lxml import etree
+import requests
+import urllib.request
+import urllib.parse
+
+# def query(content):
+
+# 请求地址
+url = 'https://zh.wikipedia.org/wiki/%E5%B2%B8%E7%94%B0%E6%96%87%E9%9B%84'
+proxies = {"https": "120.79.45.32:33128"}
+proxy_handler = urllib.request.ProxyHandler(proxies)
+opener = urllib.request.build_opener(proxy_handler)
+
+
+# 请求头部
+headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36',
+#            'proxies': str(proxies) ,
+           'Cookie':'WMF-Last-Access=18-May-2022; WMF-Last-Access-Global=18-May-2022; GeoIP=US:CA:Los_Angeles:34.05:-118.24:v4; zhwikimwuser-sessionId=4537ec7b13a72a661a31; zhwikiBlockID=375166!b168fe32377a41b4141aa029e4afc8ef4c74d6d8a80a271f260ee789d72a186c1d38cfd631c005f6c084453b4af222cdce2a6dad7b77e96b5bc89e283f6c7668; zhwikiel-sessionId=f31f73918a090a468a03; zhwikiwmE-sessionTickLastTickTime=1652868875789; zhwikiwmE-sessionTickTickCount=149',
+           'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
+}
+
+# 利用请求地址和请求头部构造请求对象
+req = urllib.request.Request(url=url, headers=headers,  method='GET')
+
+# 发送请求，获得响应
+# response = opener.open(req, timeout = 5)
+response = urllib.request.urlopen(req)
+
+# 读取响应，获得文本
+text = response.read().decode('utf-8')
+# 构造 _Element 对象
+html = etree.HTML(text)
+# 使用 xpath 匹配数据，得到 <div class="mw-parser-output"> 下所有的子节点对象
+obj_list = html.xpath('//div[@class="mw-parser-output"]/*')
+
+# 在所有的子节点对象中获取有用的 <p> 节点对象
+list = [ ]
+for i in range(0,len(obj_list)):
+    if 'p' == obj_list[i].tag:
+        list.append(i)
+
+p_list = []
+start = list[0]
+for i in range(1,len(list)):
+    if i!=len(list) and list[i] - list[i-1] !=1 :
+        end = list[i-1]
+        p_list += obj_list[start:end+1]
+        start = list[i]
+p_list += obj_list[ list[len(list)-1] : list[len(list)-1] + 1 ]
+# print(p_list)
+
+
+# 使用 xpath 匹配数据，得到 <p> 下所有的文本节点对象
+sen_list_list = [obj.xpath('.//text()') for obj in p_list]
+# print(sen_list_list)
+# print('001\n')
+
+# 将文本节点对象转化为字符串列表
+sen_list = [sen.encode('utf-8').decode() for sen_list in sen_list_list for sen in sen_list]
+# print(sen_list)
+# print('002\n')
+
+# 过滤数据，去掉空白
+sen_list_after_filter = [item for item in sen_list]
+# 将字符串列表连成字符串并返回
+print(''.join(sen_list_after_filter) )
