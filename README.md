@@ -14,10 +14,12 @@ print(speech)
 
 数据示例:
 
+```python
 [{"source": "https://www.kantei.go.jp/...",
 "title": "关于...记者会",
 "chinese_content": "中文",
 "japanese_content": "日本语"}]
+```
 
 数据:
 
